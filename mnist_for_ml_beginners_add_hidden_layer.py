@@ -2,7 +2,6 @@ import tensorflow as tf
 import input_data
 import time
 
-#　これ動かない
 # tensorflowではノードとエッジによって構成された計算グラフによって計算を進める。
 
 # 開始時刻
@@ -16,15 +15,11 @@ print("--- MNISTデータの読み込み完了 ---")
 
 # 訓練データ
 x = tf.placeholder(tf.float32, [None, 784])
-
 w1 = tf.Variable(tf.random_normal([784, 250], mean=0.0, stddev=0.01))
-
 b1 = tf.Variable(tf.zeros([250]))
 
 a1 = tf.nn.relu(tf.matmul(x,w1) + b1)
-
 w2 = tf.Variable(tf.random_normal([250, 10], mean=0.0, stddev=0.01))
-
 b2 = tf.Variable(tf.zeros([10]))
 
 # 出力層でソフトマックス回帰を実行
@@ -66,7 +61,7 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
 print("精度")
 print(session.run(accuracy, feed_dict={x: mnist.test.images, label: mnist.test.labels}))
 
-#　終了時刻
+# 終了時刻
 end_time = time.time()
 print("終了時刻： " + str(end_time))
 print("かかった時間: " + str(end_time - start_time))
