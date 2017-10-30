@@ -1,6 +1,7 @@
 import tensorflow as tf
 import input_data
 import time
+from datetime import datetime
 
 # tensorflowではノードとエッジによって構成された計算グラフによって計算を進める。
 
@@ -19,8 +20,8 @@ def affine(layer_data, next_layer_size, layer_number):
     b = tf.Variable(tf.zeros(next_layer_size))
     z = tf.matmul(layer_data, w) + b
 
-    tf.summary.histogram("weight:" + str(layer), w)
-    tf.summary.histogram("bias:" + str(layer), b)
+    tf.summary.histogram("weight:" + str(layer_number), w)
+    tf.summary.histogram("bias:" + str(layer_number), b)
     return z
 
 # InputLayer
@@ -30,7 +31,7 @@ x = tf.placeholder(tf.float32, [None, 784])
 layer_input = x
 hidden_layer_size = 5
 
-for layer in range(0, hidden_layer_size - 1):
+for layer in range(1, hidden_layer_size):
     next_layer_width = round((layer_input.shape.as_list()[1] + y_width) * 2 / 3)
 
     with tf.name_scope("Wx_b") as scope:
@@ -42,7 +43,7 @@ for layer in range(0, hidden_layer_size - 1):
     layer_input = a
 
 with tf.name_scope("Wx_b") as scope:
-    z = affine(layer_input, y_width, 9)
+    z = affine(layer_input, y_width, hidden_layer_size)
 
 # name scope を使ってグラフ・ビジュアライザにおけるノードをまとめる。
 with tf.name_scope("output_layer") as scope:
@@ -72,8 +73,10 @@ with tf.name_scope("test") as scope:
 session = tf.Session()
 
 # 全ての要約をマージしてそれらを /tmp/mnist_logs に書き出します。
+time_string = datetime.now().strftime('%Y%m%d/%H%M%S')
+
 merged = tf.summary.merge_all()
-writer = tf.summary.FileWriter("/tmp/mnist_logs", session.graph_def)
+writer = tf.summary.FileWriter("mnist_logs/" + time_string, session.graph_def)
 
 # 変数の初期化
 init_op = tf.global_variables_initializer()
@@ -85,12 +88,13 @@ session.run(init_op)
 print("--- 訓練開始 ---")
 for epoch in range(1000):
     batch_xs, batch_ys = mnist.train.next_batch(100)
-    if epoch % 10 == 0:  # 要約データと正解率を記録します。
+
+    if epoch % 10 == 0:
         result = session.run([merged, accuracy], feed_dict={x: mnist.test.images, label: mnist.test.labels})
         summary_str = result[0]
         acc = result[1]
         writer.add_summary(summary_str, epoch)
-        print("Accuracy at step %s: %s" % (epoch, acc))
+        print("Accuracy at epoch %s: %s" % (epoch, acc))
     else:
         result = session.run(train_gradient_decent, feed_dict={x: batch_xs, label: batch_ys})
 print("--- 訓練完了 ---")
