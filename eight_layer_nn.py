@@ -13,27 +13,42 @@ print("--- MNISTデータの読み込み開始 ---")
 mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
 print("--- MNISTデータの読み込み完了 ---")
 
-# セッションを作成する。
-session = tf.Session()
 
-# 訓練データ
-x = tf.placeholder(tf.float32, [None, 784], name="x-input")
+def affine(layer_data, next_layer_size, layer_number):
+    w = tf.Variable(tf.random_normal([layer_data.shape.as_list()[1], next_layer_size], mean=0.0, stddev=0.01))
+    b = tf.Variable(tf.zeros(next_layer_size))
+    z = tf.matmul(layer_data, w) + b
 
-# 重み
-w = tf.Variable(tf.zeros([784, 10]), name="weights")
+    tf.summary.histogram("weight:" + str(layer), w)
+    tf.summary.histogram("bias:" + str(layer), b)
+    return z
 
-# バイアス
-b = tf.Variable(tf.zeros([10]), name="bias")
+# InputLayer
+y_width = 10
+x = tf.placeholder(tf.float32, [None, 784])
+
+layer_input = x
+hidden_layer_size = 5
+
+for layer in range(0, hidden_layer_size - 1):
+    next_layer_width = round((layer_input.shape.as_list()[1] + y_width) * 2 / 3)
+
+    with tf.name_scope("Wx_b") as scope:
+        z = affine(layer_input, next_layer_width, layer)
+
+    with tf.name_scope("activation") as scope:
+        a = tf.nn.relu(z)
+        a_hist = tf.summary.histogram("activation:" + str(layer_input), a)
+    layer_input = a
+
+with tf.name_scope("Wx_b") as scope:
+    z = affine(layer_input, y_width, 9)
 
 # name scope を使ってグラフ・ビジュアライザにおけるノードをまとめる。
-with tf.name_scope("Wx_b") as scope:
+with tf.name_scope("output_layer") as scope:
     # 出力層でソフトマックス回帰を実行
-    y = tf.nn.softmax(tf.matmul(x, w) + b)
+    y = tf.nn.softmax(z)
 
-# データ収集のための要約 OP を追加します。
-w_hist = tf.summary.histogram("weights", w)
-b_hist = tf.summary.histogram("biases", b)
-y_hist = tf.summary.histogram("y", y)
 
 # 正解ラベル
 label = tf.placeholder(tf.float32, [None, 10], name="label-input")
@@ -52,6 +67,9 @@ with tf.name_scope("test") as scope:
     # 精度の計算
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
     tf.summary.scalar("accuracy", accuracy)
+
+# セッションを作成する。
+session = tf.Session()
 
 # 全ての要約をマージしてそれらを /tmp/mnist_logs に書き出します。
 merged = tf.summary.merge_all()
