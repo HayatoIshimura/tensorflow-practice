@@ -42,32 +42,34 @@ a_hists = []
 for layer in range(1, hidden_layer_size):
     next_layer_units = round((layer_input.shape.as_list()[1] + y_units) * 2 / 3)
 
-    with tf.name_scope("weight:" + str(layer)):
-        w = weight(layer_input.shape.as_list()[1], next_layer_units)
+    w = weight(layer_input.shape.as_list()[1], next_layer_units)
+    b = bias(next_layer_units)
 
-    with tf.name_scope("bias:" + str(layer)):
-        b = bias(next_layer_units)
+    w_hist = tf.summary.histogram("weight" + str(layer), w)
+    b_hist = tf.summary.histogram("bias" + str(layer), b)
 
-    w_hists.append(tf.summary.histogram("weight:" + str(layer), w))
-    b_hists.append(tf.summary.histogram("bias:" + str(layer), b))
+    w_hists.append(w_hist)
+    b_hists.append(b_hist)
 
-    with tf.name_scope("Wx_b" + str(layer)):
+    with tf.name_scope("Wx_b_" + str(layer)):
         z = affine(layer_input, w, b)
 
-    with tf.name_scope("activation" + str(layer)):
+    with tf.name_scope("Activation_" + str(layer)):
         a = activation(z)
-    a_hists.append(tf.summary.histogram("activation:" + str(layer_input), a))
+
+    a_hist = tf.summary.histogram("activation" + str(layer_input), a)
+    a_hists.append(a_hist)
 
     layer_input = a
 
-w = weight(layer_input.shape.as_list()[1], y_units)
-b = bias(y_units)
+w_output_layer = weight(layer_input.shape.as_list()[1], y_units)
+b_output_layer = bias(y_units)
 
 with tf.name_scope("Wx_b" + str(hidden_layer_size)):
-    z = affine(layer_input, w, b)
+    z = affine(layer_input, w_output_layer, b_output_layer)
 
-    w_hists.append(tf.summary.histogram("weight:" + str(hidden_layer_size + 1), w))
-    b_hists.append(tf.summary.histogram("bias:" + str(hidden_layer_size + 1), b))
+    w_hists.append(tf.summary.histogram("weight" + str(hidden_layer_size + 1), w_output_layer))
+    b_hists.append(tf.summary.histogram("bias" + str(hidden_layer_size + 1), b_output_layer))
 
 # name scope を使ってグラフ・ビジュアライザにおけるノードをまとめる。
 with tf.name_scope("output_layer"):
@@ -128,17 +130,20 @@ for epoch in range(1000):
         train_list.extend(a_hists)
         train_list.append(y_hist)
 
+        # トレーニングセット
         result = session.run(train_list, feed_dict={x: batch_xs, label: batch_ys})
         for i in range(1, len(result)):
             writer.add_summary(result[i], epoch)
         print("Train accuracy at epoch %s: %s" % (epoch, result[0]))
 
+        # バリデーションセット
         val_list = [accuracy, acc_summary_val, loss_summary_val]
         result = session.run(val_list, feed_dict={x: mnist.validation.images, label: mnist.validation.labels})
         for i in range(1, len(result)):
             writer.add_summary(result[i], epoch)
         print("Validation accuracy at epoch %s: %s" % (epoch, result[0]))
 
+        # テストセット
         test_list = [accuracy, acc_summary_test, loss_summary_test]
         result = session.run(test_list, feed_dict={x: mnist.test.images, label: mnist.test.labels})
         for i in range(1, len(result)):
