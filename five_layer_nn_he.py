@@ -92,7 +92,7 @@ correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(label,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
 
 with tf.name_scope("train"):
-    train_step = tf.train.GradientDescentOptimizer(0.01).minimize(cross_entropy)
+    train_step = tf.train.GradientDescentOptimizer(0.001).minimize(cross_entropy)
     acc_summary_train = tf.summary.scalar("acc-train", accuracy)
     loss_summary_train = tf.summary.scalar("cross_entropy_train", cross_entropy)
 
@@ -108,7 +108,7 @@ with tf.name_scope("val"):
 # セッションを作成する。
 session = tf.Session()
 
-writer = tf.summary.FileWriter("mnist_logs/five_layer_nn_xavier", session.graph)
+writer = tf.summary.FileWriter("mnist_logs/five_layer_nn_he", session.graph)
 
 # 変数の初期化
 init_op = tf.global_variables_initializer()
