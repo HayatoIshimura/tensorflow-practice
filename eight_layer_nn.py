@@ -3,8 +3,6 @@ import input_data
 import time
 from datetime import datetime
 
-# tensorflowではノードとエッジによって構成された計算グラフによって計算を進める。
-
 # 開始時刻
 start_time = time.time() # unixタイム
 print("開始時刻: " + str(start_time))
@@ -44,24 +42,28 @@ a_hists = []
 for layer in range(1, hidden_layer_size):
     next_layer_units = round((layer_input.shape.as_list()[1] + y_units) * 2 / 3)
 
-    w = weight(layer_input.shape.as_list()[1], next_layer_units)
-    b = bias(next_layer_units)
+    with tf.name_scope("weight:" + str(layer)):
+        w = weight(layer_input.shape.as_list()[1], next_layer_units)
+
+    with tf.name_scope("bias:" + str(layer)):
+        b = bias(next_layer_units)
 
     w_hists.append(tf.summary.histogram("weight:" + str(layer), w))
     b_hists.append(tf.summary.histogram("bias:" + str(layer), b))
 
-    with tf.name_scope("Wx_b"):
+    with tf.name_scope("Wx_b" + str(layer)):
         z = affine(layer_input, w, b)
 
-    with tf.name_scope("activation"):
+    with tf.name_scope("activation" + str(layer)):
         a = activation(z)
-        a_hists.append(tf.summary.histogram("activation:" + str(layer_input), a))
+    a_hists.append(tf.summary.histogram("activation:" + str(layer_input), a))
 
     layer_input = a
 
+w = weight(layer_input.shape.as_list()[1], y_units)
+b = bias(y_units)
+
 with tf.name_scope("Wx_b" + str(hidden_layer_size)):
-    w = weight(layer_input.shape.as_list()[1], y_units)
-    b = bias(y_units)
     z = affine(layer_input, w, b)
 
     w_hists.append(tf.summary.histogram("weight:" + str(hidden_layer_size + 1), w))
