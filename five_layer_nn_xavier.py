@@ -1,8 +1,7 @@
 import tensorflow as tf
 import input_data
+import math
 import time
-
-# このコードは重みの初期値が0.01なので、勾配消失の問題がある
 
 # 開始時刻
 start_time = time.time() # unixタイム
@@ -14,8 +13,10 @@ mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
 print("--- MNISTデータの読み込み完了 ---")
 
 
-def weight(height, width):
-    return tf.Variable(tf.random_normal([height, width], mean=0.0, stddev=0.01))
+def weight_xavier(height, width):
+    stddev = math.sqrt(1 / height)
+    initial = tf.random_normal([height, width], stddev=stddev)
+    return tf.Variable(initial)
 
 
 def bias(units):
@@ -43,7 +44,7 @@ a_hists = []
 for layer in range(1, hidden_layer_size):
     next_layer_units = round((layer_input.shape.as_list()[1] + y_units) * 2 / 3)
 
-    w = weight(layer_input.shape.as_list()[1], next_layer_units)
+    w = weight_xavier(layer_input.shape.as_list()[1], next_layer_units)
     b = bias(next_layer_units)
 
     w_hist = tf.summary.histogram("weight" + str(layer), w)
@@ -63,7 +64,7 @@ for layer in range(1, hidden_layer_size):
 
     layer_input = a
 
-w_output_layer = weight(layer_input.shape.as_list()[1], y_units)
+w_output_layer = weight_xavier(layer_input.shape.as_list()[1], y_units)
 b_output_layer = bias(y_units)
 
 with tf.name_scope("Wx_b" + str(hidden_layer_size)):
@@ -92,7 +93,7 @@ correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(label,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
 
 with tf.name_scope("train"):
-    train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entropy)
+    train_step = tf.train.GradientDescentOptimizer(0.01).minimize(cross_entropy)
     acc_summary_train = tf.summary.scalar("acc-train", accuracy)
     loss_summary_train = tf.summary.scalar("cross_entropy_train", cross_entropy)
 
@@ -108,7 +109,7 @@ with tf.name_scope("val"):
 # セッションを作成する。
 session = tf.Session()
 
-writer = tf.summary.FileWriter("mnist_logs/five_layer_nn", session.graph_def)
+writer = tf.summary.FileWriter("mnist_logs/five_layer_nn", session.graph)
 
 # 変数の初期化
 init_op = tf.global_variables_initializer()
