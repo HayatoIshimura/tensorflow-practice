@@ -107,10 +107,7 @@ with tf.name_scope("val"):
 # セッションを作成する。
 session = tf.Session()
 
-# 全ての要約をマージしてそれらを /tmp/mnist_logs に書き出します。
-time_string = datetime.now().strftime('%Y%m%d/%H%M%S')
-
-writer = tf.summary.FileWriter("mnist_logs/" + time_string, session.graph_def)
+writer = tf.summary.FileWriter("mnist_logs/five_layer_nn", session.graph_def)
 
 # 変数の初期化
 init_op = tf.global_variables_initializer()
