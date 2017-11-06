@@ -12,9 +12,9 @@ print("--- MNISTデータの読み込み開始 ---")
 mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
 print("--- MNISTデータの読み込み完了 ---")
 
-def weight_xavier(height, width):
-    stddev = math.sqrt(1 / height)
-    initial = tf.random_normal([height, width], stddev=stddev)
+def weight_he(data_quantity, unit_size):
+    stddev = math.sqrt(2 / data_quantity)
+    initial = tf.random_normal([data_quantity, unit_size], stddev=stddev)
     return tf.Variable(initial)
 
 
@@ -43,7 +43,7 @@ a_hists = []
 for layer in range(1, hidden_layer_size):
     next_layer_units = round((layer_input.shape.as_list()[1] + y_units) * 2 / 3)
 
-    w = weight_xavier(layer_input.shape.as_list()[1], next_layer_units)
+    w = weight_he(layer_input.shape.as_list()[1], next_layer_units)
     b = bias(next_layer_units)
 
     w_hist = tf.summary.histogram("weight" + str(layer), w)
@@ -63,7 +63,7 @@ for layer in range(1, hidden_layer_size):
 
     layer_input = a
 
-w_output_layer = weight_xavier(layer_input.shape.as_list()[1], y_units)
+w_output_layer = weight_he(layer_input.shape.as_list()[1], y_units)
 b_output_layer = bias(y_units)
 
 with tf.name_scope("Wx_b" + str(hidden_layer_size)):
