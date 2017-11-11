@@ -12,9 +12,9 @@ print("--- MNISTデータの読み込み開始 ---")
 mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
 print("--- MNISTデータの読み込み完了 ---")
 
-def weight_he(data_quantity, unit_size):
-    stddev = math.sqrt(2 / data_quantity)
-    initial = tf.random_normal([data_quantity, unit_size], stddev=stddev)
+def weight_he(input_unit_size, output_unit_size):
+    stddev = math.sqrt(2 / input_unit_size)
+    initial = tf.random_normal([input_unit_size, output_unit_size], stddev=stddev)
     return tf.Variable(initial)
 
 

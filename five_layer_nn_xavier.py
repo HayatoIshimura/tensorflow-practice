@@ -12,9 +12,10 @@ print("--- MNISTデータの読み込み開始 ---")
 mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
 print("--- MNISTデータの読み込み完了 ---")
 
-def weight_xavier(height, width):
-    stddev = math.sqrt(1 / height)
-    initial = tf.random_normal([height, width], stddev=stddev)
+
+def weight_xavier(input_unit_size, output_unit_size):
+    stddev = math.sqrt(1 / input_unit_size)
+    initial = tf.random_normal([input_unit_size, output_unit_size], stddev=stddev)
     return tf.Variable(initial)
 
 
