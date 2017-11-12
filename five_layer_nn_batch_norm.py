@@ -6,7 +6,6 @@ import time
 
 # 開始時刻
 start_time = time.time() # unixタイム
-print("開始時刻: " + str(start_time))
 
 # MNISTのデータをダウンロードしてローカルへ
 print("--- MNISTデータの読み込み開始 ---")
@@ -28,6 +27,23 @@ def affine(input_d, w, b):
 
 def activation(input_d):
     return tf.nn.relu(input_d)
+
+
+def batch_norm(X, axes, shape, is_training):
+    """
+    バッチ正規化
+    平均と分散による各レイヤの入力を正規化(白色化)する
+    """
+    if is_training is False:
+        return X
+    epsilon = 1e-5
+    # 平均と分散
+    mean, variance = tf.nn.moments(X, axes)
+    # scaleとoffsetも学習対象
+    scale = tf.Variable(tf.ones([shape]))
+    offset = tf.Variable(tf.zeros([shape]))
+    return tf.nn.batch_normalization(X, mean, variance, offset, scale, epsilon)
+
 
 # InputLayer
 y_units = 10
@@ -55,8 +71,11 @@ for layer in range(1, hidden_layer_size):
     with tf.name_scope("Wx_b_" + str(layer)):
         z = affine(layer_input, w, b)
 
+    with tf.name_scope("Batch_norm"):
+        bn = batch_norm(z, [0], next_layer_units, True)
+
     with tf.name_scope("Activation_" + str(layer)):
-        a = activation(z)
+        a = activation(bn)
 
     a_hist = tf.summary.histogram("activation" + str(layer_input), a)
     a_hists.append(a_hist)
@@ -92,7 +111,7 @@ correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(label,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
 
 with tf.name_scope("train"):
-    train_step = tf.train.GradientDescentOptimizer(0.01).minimize(cross_entropy)
+    train_step = tf.train.GradientDescentOptimizer(0.001).minimize(cross_entropy)
     acc_summary_train = tf.summary.scalar("acc-train", accuracy)
     loss_summary_train = tf.summary.scalar("cross_entropy_train", cross_entropy)
 
@@ -154,5 +173,4 @@ print("--- 訓練完了 ---")
 
 # 終了時刻
 end_time = time.time()
-print("終了時刻： " + str(end_time))
 print("かかった時間: " + str(end_time - start_time))
