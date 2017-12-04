@@ -16,7 +16,6 @@ n_input = 28
 n_output = 10
 n_steps = 28
 n_hidden = 128
-batch_size = 50
 
 # [入力データ数、シーケンス数、特徴数]
 x = tf.placeholder(tf.float32, [None, n_steps, n_input])
@@ -61,6 +60,7 @@ init_op = tf.global_variables_initializer()
 session.run(init_op)
 
 n_epoch = 10000
+batch_size = 128
 
 for epoch in range(n_epoch):
     batch_xs, batch_ys = mnist.train.next_batch(batch_size)
