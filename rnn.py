@@ -21,7 +21,7 @@ n_hidden = 128
 x = tf.placeholder(tf.float32, [None, n_steps, n_input])
 y = tf.placeholder(tf.float32, [None, n_output])
 
-def RNN(x, units, output):
+def RNN(x, model_name):
 
     ## 時系列データをTensorFlowのRNNで利用できる形式に変換
     # 1. [シーケンス数、入力データ数、特徴数]に転置
@@ -36,18 +36,26 @@ def RNN(x, units, output):
     # 1, 2, 3をすべてやってくれるAPI
     x = tf.unstack(x, n_steps, 1)
 
-    lstm_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
-    outputs, states = rnn.static_rnn(lstm_cell, x, dtype=tf.float32)
+    def get_cell(model_name):
+        if model_name == "lstm":
+            return rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
+        elif model_name == "gru":
+            return rnn.GRUCell(n_hidden)
+        else:
+            return rnn.BasicRNNCell(n_hidden)
+
+    cell = get_cell(model_name)
+    outputs, states = rnn.static_rnn(cell, x, dtype=tf.float32)
 
     w = tf.Variable(tf.random_normal([n_hidden, n_output]))
     b = tf.Variable(tf.random_normal([n_output]))
 
     return tf.matmul(outputs[-1], w) + b
 
-prediction = RNN(x)
+prediction = RNN(x, "gru")
 
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=y))
-step = tf.train.AdagradOptimizer(0.001).minimize(cost)
+step = tf.train.AdagradOptimizer(0.01).minimize(cost)
 
 correct_prediction = tf.equal(tf.argmax(prediction, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
@@ -61,6 +69,10 @@ session.run(init_op)
 n_epoch = 10000
 batch_size = 128
 
+valid_len = 128
+valid_data = mnist.test.images[:valid_len].reshape((-1, 28, 28))
+valid_label = mnist.test.labels[:valid_len]
+
 for epoch in range(n_epoch):
     batch_xs, batch_ys = mnist.train.next_batch(batch_size)
 
@@ -71,7 +83,11 @@ for epoch in range(n_epoch):
     if epoch % 100 == 0:
         acc = session.run(accuracy, feed_dict={x: batch_xs, y:batch_ys})
         loss = session.run(cost, feed_dict={x: batch_xs, y:batch_ys})
-        print('epoch: {} / loss: {:.6f} / acc: {:.5f}'.format(epoch, loss, acc))
+        print('TRAIN: epoch: {} / loss: {:.6f} / acc: {:.5f}'.format(epoch, loss, acc))
+
+        valid_acc = session.run(accuracy, feed_dict={x: valid_data, y: valid_label})
+        valid_loss = session.run(cost, feed_dict={x: valid_data, y: valid_label})
+        print('VALID: epoch: {} / loss: {:.6f} / acc: {:.5f}'.format(epoch, valid_loss, valid_acc))
 
 test_len = 128
 test_data = mnist.test.images[:test_len].reshape((-1, 28, 28))
