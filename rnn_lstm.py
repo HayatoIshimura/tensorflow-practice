@@ -21,7 +21,7 @@ n_hidden = 128
 x = tf.placeholder(tf.float32, [None, n_steps, n_input])
 y = tf.placeholder(tf.float32, [None, n_output])
 
-def RNN(x):
+def RNN(x, units, output):
 
     ## 時系列データをTensorFlowのRNNで利用できる形式に変換
     # 1. [シーケンス数、入力データ数、特徴数]に転置
@@ -37,13 +37,12 @@ def RNN(x):
     x = tf.unstack(x, n_steps, 1)
 
     lstm_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
-
     outputs, states = rnn.static_rnn(lstm_cell, x, dtype=tf.float32)
 
-    weight = tf.Variable(tf.random_normal([n_hidden, n_output]))
-    bias = tf.Variable(tf.random_normal([n_output]))
+    w = tf.Variable(tf.random_normal([n_hidden, n_output]))
+    b = tf.Variable(tf.random_normal([n_output]))
 
-    return tf.matmul(outputs[-1], weight) + bias
+    return tf.matmul(outputs[-1], w) + b
 
 prediction = RNN(x)
 
