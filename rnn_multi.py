@@ -62,6 +62,7 @@ def RNN(x, model_name):
 
 prediction = RNN(x, "gru")
 
+# 最後のセルの予測だけ取り出す。
 final_pred = prediction[-1]
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=final_pred, labels=y))
 step = tf.train.AdamOptimizer(0.01).minimize(cost)
