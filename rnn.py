@@ -17,6 +17,8 @@ n_output = 10
 n_steps = 28
 n_hidden = 128
 
+batch_size = 128
+
 # [入力データ数、シーケンス数、特徴数]
 x = tf.placeholder(tf.float32, [None, n_steps, n_input])
 y = tf.placeholder(tf.float32, [None, n_output])
@@ -45,7 +47,8 @@ def RNN(x, model_name):
             return rnn.BasicRNNCell(n_hidden)
 
     cell = get_cell(model_name)
-    outputs, states = rnn.static_rnn(cell, x, dtype=tf.float32)
+    initial_state = cell.zero_state(batch_size, dtype=tf.float32)
+    outputs, states = rnn.static_rnn(cell, x, dtype=tf.float32, initial_state=initial_state)
 
     w = tf.Variable(tf.random_normal([n_hidden, n_output]))
     b = tf.Variable(tf.random_normal([n_output]))
@@ -67,7 +70,6 @@ init_op = tf.global_variables_initializer()
 session.run(init_op)
 
 n_epoch = 10000
-batch_size = 128
 
 valid_len = 128
 valid_data = mnist.test.images[:valid_len].reshape((-1, 28, 28))

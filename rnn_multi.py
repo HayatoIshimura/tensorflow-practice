@@ -57,17 +57,16 @@ def RNN(x, model_name):
     w = tf.Variable(tf.random_normal([n_hidden, n_output]))
     b = tf.Variable(tf.random_normal([n_output]))
 
-    logits = [tf.matmul(output, w) + b for output in outputs]
-    return logits
+    final_output = outputs[-1]
+    return tf.matmul(final_output, w) + b
 
-prediction = RNN(x, "gru")
+pred = RNN(x, "gru")
 
 # 最後のセルの予測だけ取り出す。
-final_pred = prediction[-1]
-cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=final_pred, labels=y))
+cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=y))
 step = tf.train.AdamOptimizer(0.01).minimize(cost)
 
-correct_prediction = tf.equal(tf.argmax(final_pred, 1), tf.argmax(y, 1))
+correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 # セッションを作成する。
@@ -76,7 +75,7 @@ session = tf.Session()
 init_op = tf.global_variables_initializer()
 session.run(init_op)
 
-n_epoch = 10000
+n_epoch = 1000
 batch_size = 128
 
 valid_len = 128
